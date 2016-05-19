@@ -11,8 +11,8 @@ sudo:
 notifications:
   email: false
 # uncomment the following lines to override the default test script
+before_install:
+ - sudo apt-get install -qq python-numpy python-scipy
 script:
-  - sudo pip install pyamg
-  - sudo pip install scipy
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia -e 'Pkg.clone(pwd()); Pkg.build("PyAMG"); Pkg.test("PyAMG"; coverage=true)'
