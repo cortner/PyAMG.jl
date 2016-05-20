@@ -58,7 +58,7 @@ print("Third solve: (tol 1e-6)")
 println("|A x_amg - b|_∞ = ", norm(A * x3 - b, Inf))
 @assert norm(A * x2 - b, Inf) < 1e-8
 
-println("Testing amg \\ b: (PyAMG as a preconditioner)")
-println("Cost of amg \\ b: (2 runs)")
-@time amg \ b;
-@time amg \ b;
+# println("Testing amg \\ b: (PyAMG as a preconditioner)")
+# println("Cost of amg \\ b: (2 runs)")
+# @time amg \ b;
+# @time amg \ b;

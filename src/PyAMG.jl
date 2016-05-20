@@ -4,7 +4,7 @@ module PyAMG
 export AMGSolver,
        RugeStubenSolver,
        SmoothedAggregationSolver,
-       solve
+       solve, solve!, aspreconditioner, set_cycle!
 
 
 using PyCall
@@ -68,6 +68,9 @@ type AMGSolver{T}
     po::PyObject
     id::T
     cycle::AbstractString
+    # todo: maxiter
+    # todo: tolerance
+    A::SparseMatrixCSC
 end
 
 type RugeStuben end
@@ -79,7 +82,7 @@ typealias SmoothedAggregationSolver AMGSolver{SmoothedAggregation}
 """
 change the type of AMG cycle, for use with `call` or `\`.
 """
-set_cycle!(amg::AMGSolver, cycle) = begin amg.cycle = cycle; nothing end
+set_cycle!(amg, cycle) = begin amg.cycle = cycle; nothing end
 
 
 """
@@ -91,7 +94,7 @@ Create a Ruge Stuben instance of `AMGSolver`; wraps
 RugeStubenSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
     AMGSolver(pyamg.ruge_stuben_solver(py_csr(A), kwargs...),
               RugeStuben(),
-              cycle)
+              cycle, A)
 
 
 """
@@ -111,7 +114,8 @@ SmoothedAggregationSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
 PyAMG's 'blackbox' solver. See `pyamg.solve?` for `kwargs`.
 """
 solve(A::SparseMatrixCSC, b::Vector; kwargs...) =
-    pyamg.solve( py_csr(A), b; kwargs...)
+    pyamg.solve( py_csr(A), b; kwargs... )
+
 
 
 """
@@ -139,11 +143,57 @@ Returns a `Vector` with the result of the AMG solver.
 solve(amg::AMGSolver, b; kwargs...) = amg.po[:solve](b; kwargs...)
 
 
-# the \ is in order to use amg as a preconditioner, this is e.g.
-# for compatibility with IterativeSolvers.jl
-#
-import Base.\
-\(amg::AMGSolver, b) = solve(amg, b; maxiter=1)
+######### Capability to use PyAMG.jl as a preconditioner for
+######### nonlinear optimisation, sampling, etc
+
+import Base.\, Base.*
+\(amg::AMGSolver, b) = solve(amg, b)
+*(amg::AMGSolver, b) = amg.A * b
+
+import Base.A_ldiv_B!, Base.A_mul_B!
+Base.A_ldiv_B!(x, amg::AMGSolver, b) = solve!(x, amg, b)
+Base.A_mul_B!(x, amg::AMGSolver, b) = A_mul_B!(x, amg.A, b)
+
+
+######### Capability to use PyAMG.jl as a preconditioner for
+######### iterative linear algebra
+
+"""
+`type AMGPreconditioner`
+
+returned by `aspreconditioner(amg)`, when `amg` is of type `AMGSolver`.
+This stores `PyObject` that acts as a linear operator. This type
+should be used when `PyAMG` should typically be used as a preconditioner for
+iterative linear algebra.
+
+Overloaded methods that can be used with an `AMGPreconditioner` are
+`\`, `*`, `A_ldiv_B!`, `A_mul_B!`
+"""
+type AMGPreconditioner
+  po::PyObject
+  A::SparseMatrixCSC
+end
+
+
+"""
+`aspreconditioner(amg::AMGSolver; cycle=…)`
+
+returns an `M::AMGPreconditioner` object that is suitable for usage
+as a preconditioner for iterative linear algebra.
+
+If `x` is a vector, then `M \ x` denotes application of the
+preconditioner (i.e. 1 MG cycle), while `M * x` denotes
+multiplication with the original matrix from which `amg` was constructed.
+"""
+aspreconditioner(amg::AMGSolver; cycle=amg.cycle) =
+      AMGPreconditioner(amg.po[:aspreconditioner](cycle=cycle), amg.A)
+
+\(amg::AMGPreconditioner, b::Vector) = amg.po[:M.matvec](b)
+*(amg::AMGPreconditioner, x::Vector) = amg.A * x
+
+Base.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copy!(x, amg.po[:M.matvec](b))
+Base.A_mul_B!(b, amg::AMGPreconditioner, x) = A_mul_B!(b, amg.A, x)
+
 
 
 """
@@ -173,8 +223,7 @@ function diagnostics(A::SparseMatrixCSC; kwargs...)
               I tried to @pyimport solver_diagnostics, but it fails.
               This is probably because `solver_diagnostics.py` is not
               in the current directory. Please see
-              `?PyAMG.diagonistics`
-              on how to use this function.
+              `?PyAMG.diagonistics` on how to use this function.
               """)
     end
 
