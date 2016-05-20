@@ -4,7 +4,7 @@ os:
   - linux
 julia:
   - release
-  - nightly
+  # - nightly
 sudo:
   - required
 notifications:
@@ -26,4 +26,5 @@ install:
   - conda install --yes pip numpy scipy nose pyamg
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia -e 'Pkg.add("IterativeSolvers")'
   - julia -e 'Pkg.clone(pwd()); Pkg.build("PyAMG"); Pkg.test("PyAMG"; coverage=true)'
