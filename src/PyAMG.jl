@@ -11,9 +11,6 @@ using PyCall
 
 @pyimport scipy.sparse as scipy_sparse
 @pyimport pyamg
-# catch
-#   error("PyAMG requires working Python installation with scipy and pyamg")
-# end
 
 
 """
@@ -69,7 +66,7 @@ type AMGSolver{T}
     id::T
     cycle::AbstractString
     # todo: maxiter
-    # todo: tolerance
+    # todo: tolerance  >>> default arguments
     A::SparseMatrixCSC
 end
 
@@ -92,9 +89,9 @@ Create a Ruge Stuben instance of `AMGSolver`; wraps
 `pyamg.ruge_stuben_solver`
 """
 RugeStubenSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
-    AMGSolver(pyamg.ruge_stuben_solver(py_csr(A), kwargs...),
-              RugeStuben(),
-              cycle, A)
+   AMGSolver(pyamg.ruge_stuben_solver(py_csr(A), kwargs...),
+            RugeStuben(),
+            cycle, A)
 
 
 """
@@ -103,9 +100,9 @@ RugeStubenSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
 Wrapper for `pyamg.smoothed_aggregation_solver`. See `?AMGSolver` for usage.
 """
 SmoothedAggregationSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
-    AMGSolver(pyamg.smoothed_aggregation_solver(py_csr(A), kwargs...),
-              SmoothedAggregation(),
-              cycle)
+   AMGSolver(pyamg.smoothed_aggregation_solver(py_csr(A), kwargs...),
+            SmoothedAggregation(),
+            cycle)
 
 
 """
@@ -147,12 +144,12 @@ solve(amg::AMGSolver, b; kwargs...) = amg.po[:solve](b; kwargs...)
 ######### nonlinear optimisation, sampling, etc
 
 import Base.\, Base.*
-\(amg::AMGSolver, b) = solve(amg, b)
-*(amg::AMGSolver, b) = amg.A * b
+\(amg::AMGSolver, b::Vector) = solve(amg, b)
+*(amg::AMGSolver, x::Vector) = amg.A * x
 
 import Base.A_ldiv_B!, Base.A_mul_B!
 Base.A_ldiv_B!(x, amg::AMGSolver, b) = solve!(x, amg, b)
-Base.A_mul_B!(x, amg::AMGSolver, b) = A_mul_B!(x, amg.A, b)
+Base.A_mul_B!(b, amg::AMGSolver, x) = A_mul_B!(b, amg.A, x)
 
 
 ######### Capability to use PyAMG.jl as a preconditioner for
@@ -188,10 +185,10 @@ multiplication with the original matrix from which `amg` was constructed.
 aspreconditioner(amg::AMGSolver; cycle=amg.cycle) =
       AMGPreconditioner(amg.po[:aspreconditioner](cycle=cycle), amg.A)
 
-\(amg::AMGPreconditioner, b::Vector) = amg.po[:M.matvec](b)
+\(amg::AMGPreconditioner, b::Vector) = amg.po[:matvec](b)
 *(amg::AMGPreconditioner, x::Vector) = amg.A * x
 
-Base.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copy!(x, amg.po[:M.matvec](b))
+Base.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copy!(x, amg.po[:matvec](b))
 Base.A_mul_B!(b, amg::AMGPreconditioner, x) = A_mul_B!(b, amg.A, x)
 
 

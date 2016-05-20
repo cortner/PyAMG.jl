@@ -11,10 +11,13 @@ These must be installed separately, but it is straightforward.
 
 In all examples it is assumed that `A` is a sparse matrix
 and `b` a vector and `amg` is an `AMGSolver` instance constructed from `A`.
-
-<!-- **Warning:** `amg \ b` does **not** solve $Ax = b$, but it applies a
-single multi-grid cycle, typically when AMG is employed as a preconditioner.
-To *solve* $Ax = b$, use `x = solve(amg, b)`. -->
+The classical example would be the Dirichlet problem on a square,
+```
+N = 100
+L1 = spdiagm((-ones(N-1), 2*ones(N), -ones(N-1)), (-1,0,1), N, N) * N^2
+A = kron(speye(N), L1) + kron(L1, speye(N))
+b = ones(size(A,1))
+```
 
 ### Blackbox solver
 ```
@@ -50,14 +53,12 @@ After initialising, we can construct a preconditioner via
 M = aspreconditioner(amg)
 ```
 
-The following line then performes a single MG cycle
+The line `M \ b` then performes a single MG cycle.
+This is e.g. compatible with the `IterativeSolvers` package:
 ```
-p = M \ b
-```
-
-E.g., this is compatible with
-```
-IterativeSolvers.cg(..., Pl=amg, ...)
+using PyAMG, IterativeSolvers
+M = aspreconditioner(RugeStubenSolver(A))
+IterativeSolvers.cg(A, b, M; tol=TOL)
 ```
 
 ## List of Types and Methods
