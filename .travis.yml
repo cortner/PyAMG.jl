@@ -5,10 +5,10 @@ os:
   - linux
 julia:
   - release
-#   - nightly
-# matrix:
-#   allow_failures:
-#     - nightly
+  - nightly
+matrix:
+  allow_failures:
+    - julia: nightly
 sudo:
   - required
 notifications:
