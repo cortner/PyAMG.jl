@@ -1,3 +1,5 @@
+# TODO: use Conda.jl to manage scipy and pyamg dependence.
+
 # see readme for module documentation
 module PyAMG
 

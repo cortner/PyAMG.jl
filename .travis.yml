@@ -1,10 +1,14 @@
 # Documentation: http://docs.travis-ci.com/user/languages/julia/
+# TODO: fix the allow_failures mechanism
 language: julia
 os:
   - linux
 julia:
   - release
-  # - nightly
+#   - nightly
+# matrix:
+#   allow_failures:
+#     - nightly
 sudo:
   - required
 notifications:
@@ -26,5 +30,4 @@ install:
   - conda install --yes pip numpy scipy nose pyamg
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.add("IterativeSolvers")'
   - julia -e 'Pkg.clone(pwd()); Pkg.build("PyAMG"); Pkg.test("PyAMG"; coverage=true)'
