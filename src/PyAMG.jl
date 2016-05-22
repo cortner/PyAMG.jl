@@ -10,8 +10,10 @@ export RugeStubenSolver,
 
 using PyCall
 
-@pyimport scipy.sparse as scipy_sparse
-@pyimport pyamg
+# @pyimport scipy.sparse as scipy_sparse
+# @pyimport pyamg
+scipy_sparse = pyimport_conda("scipy.sparse", "scipy")
+pyamg = pyimport_conda("pyamg", "pyamg")
 
 
 """
@@ -21,14 +23,13 @@ Takes a Julia CSC matrix and converts it into `PyObject`, which stores a
 `scipy.sparse.csc_matrix`.
 """
 function py_csc(A::SparseMatrixCSC)
-    # create an empty sparse matrix in Python
-    Apy = scipy_sparse.csc_matrix(size(A))
-    # write the values
-    Apy[:data] = copy(A.nzval)
-    # write the indices
-    Apy[:indices] = A.rowval - 1
-    Apy[:indptr] = A.colptr - 1
-    return Apy
+   # create an empty sparse matrix in Python
+   Apy = scipy_sparse[:csc_matrix](size(A))
+   # write the values and indices
+   Apy[:data] = copy(A.nzval)
+   Apy[:indices] = A.rowval - 1
+   Apy[:indptr] = A.colptr - 1
+   return Apy
 end
 
 
@@ -69,7 +70,7 @@ type AMGSolver{T}
     id::T
     cycle::AbstractString
     # todo: maxiter
-    # todo: tolerance  >>> default arguments
+    # todo: tolerance  >>> default arguments, probably use a kwargs Dict
     A::SparseMatrixCSC
 end
 
@@ -92,7 +93,7 @@ Create a Ruge Stuben instance of `AMGSolver`; wraps
 `pyamg.ruge_stuben_solver`
 """
 RugeStubenSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
-   AMGSolver(pyamg.ruge_stuben_solver(py_csr(A), kwargs...),
+   AMGSolver(pyamg[:ruge_stuben_solver](py_csr(A), kwargs...),
             RugeStuben(),
             cycle, A)
 
@@ -103,7 +104,7 @@ RugeStubenSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
 Wrapper for `pyamg.smoothed_aggregation_solver`. See `?AMGSolver` for usage.
 """
 SmoothedAggregationSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
-   AMGSolver(pyamg.smoothed_aggregation_solver(py_csr(A), kwargs...),
+   AMGSolver(pyamg[:smoothed_aggregation_solver](py_csr(A), kwargs...),
             SmoothedAggregation(),
             cycle)
 
@@ -114,7 +115,7 @@ SmoothedAggregationSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
 PyAMG's 'blackbox' solver. See `pyamg.solve?` for `kwargs`.
 """
 solve(A::SparseMatrixCSC, b::Vector; kwargs...) =
-    pyamg.solve( py_csr(A), b; kwargs... )
+    pyamg[:solve]( py_csr(A), b; kwargs... )
 
 
 
@@ -146,7 +147,7 @@ solve(amg::AMGSolver, b; kwargs...) = amg.po[:solve](b; kwargs...)
 ######### Capability to use PyAMG.jl as a preconditioner for
 ######### nonlinear optimisation, sampling, etc
 
-# TODO: the following 4 methods still need to be tested 
+# TODO: the following 4 methods still need to be tested
 
 import Base.\, Base.*
 \(amg::AMGSolver, b::Vector) = solve(amg, b)
