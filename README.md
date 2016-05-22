@@ -4,12 +4,16 @@
 
 Convenience wrapper module for the [PyAMG](http://pyamg.org) library.
 Requires a Python installation with scipy and pyamg installed.
-These must be installed separately, but it is
-[straightforward](https://github.com/pyamg/pyamg).
+If the `Conda.jl` package manager is used, then `PyAMG` will be
+automatically installed on first use. Otherwise, follow the [straightforward
+instructions](https://github.com/pyamg/pyamg). (With an Anaconda
+   distribution, one should just need to type `conda install pyamg`
+   in a terminal.)
 
-*Note on `0.4` vs `0.5`:* `nightly` fails on travis-ci, but all tests pass
-under both versions on my own machine, so while  I myself use only `0.4` for
-now, I assume that `PyAMG.jl` can be equally used on `0.5`.
+*Note on `0.4` vs `0.5`:* `nightly` fails on travis-ci, but this seems to be
+due to failure or required packaged. all tests pass
+under both versions on my own machine, so while I myself use only `0.4` for
+now, I assume that `PyAMG.jl` can be used without difficulties on `0.5`.
 
 ## Basic Usage
 
