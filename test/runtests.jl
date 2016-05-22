@@ -1,4 +1,15 @@
 
+print("check wether on travis...")
+travis = ccall((:getenv, "libc"), Ptr{UInt8}, (Ptr{UInt8},), "TRAVIS")
+if travis != Ptr{UInt8}(0x0000000000000000)
+   println("yes: fixing PyCall installation")
+   ENV["PYTHON"] = ""
+   Pkg.build("PyCall")
+else
+   println("... no")
+end
+
+
 using PyAMG
 using Base.Test
 
