@@ -3,8 +3,7 @@
 # see readme for module documentation
 module PyAMG
 
-export AMGSolver,
-       RugeStubenSolver,
+export RugeStubenSolver,
        SmoothedAggregationSolver,
        solve, solve!, aspreconditioner, set_cycle!
 
@@ -39,6 +38,8 @@ end
 Takes a Julia CSC matrix and converts it into `PyObject`, which stored a
 `scipy.sparse.csr_matrix`. (Note: it first converts it to `csc_matrix`, then
 calls `tocsr()`)
+
+TODO: this seems extremely inefficient and should at some point be fixed.
 """
 py_csr(A::SparseMatrixCSC) = py_csc(A)[:tocsr]()
 
@@ -144,6 +145,8 @@ solve(amg::AMGSolver, b; kwargs...) = amg.po[:solve](b; kwargs...)
 
 ######### Capability to use PyAMG.jl as a preconditioner for
 ######### nonlinear optimisation, sampling, etc
+
+# TODO: the following 4 methods still need to be tested 
 
 import Base.\, Base.*
 \(amg::AMGSolver, b::Vector) = solve(amg, b)

@@ -4,7 +4,8 @@
 
 Convenience wrapper module for the [PyAMG](http://pyamg.org) library.
 Requires a Python installation with scipy and pyamg installed.
-These must be installed separately, but it is straightforward.
+These must be installed separately, but it is
+[straightforward](https://github.com/pyamg/pyamg).
 
 *Note on `0.4` vs `0.5`:* `nightly` fails on travis-ci, but all tests pass
 under both versions on my own machine, so while  I myself use only `0.4` for
