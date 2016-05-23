@@ -59,7 +59,20 @@ println("|A x_amg - b|_∞ = ", norm(A * x3 - b, Inf))
 @assert norm(A * x2 - b, Inf) < 1e-8
 
 println("=================================================")
-println("Test 4: AMG as a preconditioner")
+println("Test 4: \\, ldiv, and kwargs")
+A, b = L2d(50)
+amg = RugeStubenSolver(A)
+x_solve = solve(amg, b, tol=1e-6, cycle="V", accel="cg")
+set_kwargs!(amg, tol=1e-6, cycle="V", accel="cg")
+x_bs = amg \ b
+x_ldiv = zeros(x_solve)
+A_ldiv_B!(x_ldiv, amg, b)
+@assert x_solve == x_bs
+@assert x_solve == x_ldiv
+
+
+println("=================================================")
+println("Test 5: AMG as a preconditioner")
 println("        100 x 100 Dirichlet problem, TOL = 1e-4")
 println("        PyAMG vs CG vs PCG  (using IterativeSolvers)")
 A, b = L2d(100)

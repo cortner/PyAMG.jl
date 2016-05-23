@@ -4,11 +4,9 @@
 
 Convenience wrapper module for the [PyAMG](http://pyamg.org) library.
 Requires a Python installation with `scipy` and `pyamg`.
-If the `Conda.jl` package manager is used, then `pyamg` will be
-automatically installed on first use. Otherwise, follow the [straightforward
-instructions](https://github.com/pyamg/pyamg). (With an Anaconda
-   distribution, one should just need to type `conda install pyamg`
-   in a terminal.)
+If an Anconda distribution is used (including the `Conda.jl` package manager)
+then `pyamg` should be automatically installed on first use. Otherwise, follow
+the [straightforward instructions](https://github.com/pyamg/pyamg).
 
 *Note on `0.4` vs `0.5`:* `nightly` fails on travis-ci, but this seems to be
 due to failure of required packages. All tests pass

@@ -4,7 +4,8 @@ module PyAMG
 
 export RugeStubenSolver,
        SmoothedAggregationSolver,
-       solve, solve!, aspreconditioner, set_cycle!
+       solve, solve!, aspreconditioner,
+       set_kwargs!
 
 
 using PyCall
@@ -67,9 +68,7 @@ x = amg \ b
 type AMGSolver{T}
     po::PyObject
     id::T
-    cycle::AbstractString
-    # todo: maxiter
-    # todo: tolerance  >>> default arguments, probably use a kwargs Dict
+    kwargs::Vector
     A::SparseMatrixCSC
 end
 
@@ -86,23 +85,24 @@ set_cycle!(amg, cycle) = begin amg.cycle = cycle; nothing end
 
 
 """
-`RugeStubenSolver(A::SparseMatrixCSC, cycle="V", kwargs...)`:
+`RugeStubenSolver(A::SparseMatrixCSC, kwargs...)`:
 
 Create a Ruge Stuben instance of `AMGSolver`; wraps
-`pyamg.ruge_stuben_solver`
+`pyamg.ruge_stuben_solver`; see `pyamg.ruge_stuben_solver?`
+for keyword arguments.  See `?AMGSolver` for usage.
 """
-RugeStubenSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
+RugeStubenSolver(A::SparseMatrixCSC, kwargs...) =
    AMGSolver(pyamg[:ruge_stuben_solver](py_csr(A), kwargs...),
-            RugeStuben(),
-            cycle, A)
+            RugeStuben(), Any[], A)
 
 
 """
 `SmoothedAggregationSolver(A::SparseMatrixCSC, kwargs...)`
 
-Wrapper for `pyamg.smoothed_aggregation_solver`. See `?AMGSolver` for usage.
+Wrapper for `pyamg.smoothed_aggregation_solver`; see `pyamg.ruge_stuben_solver?`
+for keyword arguments. See `?AMGSolver` for usage.
 """
-SmoothedAggregationSolver(A::SparseMatrixCSC, cycle="V", kwargs...) =
+SmoothedAggregationSolver(A::SparseMatrixCSC, kwargs...) =
    AMGSolver(pyamg[:smoothed_aggregation_solver](py_csr(A), kwargs...),
             SmoothedAggregation(),
             cycle)
@@ -117,11 +117,13 @@ solve(A::SparseMatrixCSC, b::Vector; kwargs...) =
     pyamg[:solve]( py_csr(A), b; kwargs... )
 
 
-
 """
 `solve(amg::AMGSolver, b, kwargs...)`
 
-Returns a `Vector` with the result of the AMG solver.
+Returns a `Vector` with the result of the AMG solver. The keyword
+arguments can either be passed directly, or can be stored in
+`amd` via `set_kwargs!`.
+
 
 ### `kwargs`  (copy-pasted from Python docs)
 
@@ -135,13 +137,17 @@ Returns a `Vector` with the result of the AMG solver.
     `pyamg.krylov` (preferred) or scipy.sparse.linalg.isolve.
     If accel is not a string, it will be treated like a function
     with the same interface provided by the iterative solvers in SciPy.
-        (the function version is not tested in Julia!)
+         (the function version is not tested in Julia!)
 * `callback` : User-defined function called after each iteration.  It is
     called as callback(xk) where xk is the k-th iterate vector.
+         (also not tested in Julia!)
 * `residuals` : List to contain residual norms at each iteration.
 """
-solve(amg::AMGSolver, b; kwargs...) = amg.po[:solve](b; kwargs...)
+solve(amg::AMGSolver, b; kwargs...) = amg.po[:solve](b; amg.kwargs..., kwargs...)
 
+function set_kwargs!(amg::AMGSolver; kwargs...)
+   amg.kwargs = kwargs
+end
 
 ######### Capability to use PyAMG.jl as a preconditioner for
 ######### nonlinear optimisation, sampling, etc
@@ -153,10 +159,11 @@ import Base.\, Base.*
 *(amg::AMGSolver, x::Vector) = amg.A * x
 
 import Base.A_ldiv_B!, Base.A_mul_B!
-Base.A_ldiv_B!(x, amg::AMGSolver, b) = solve!(x, amg, b)
+Base.A_ldiv_B!(x, amg::AMGSolver, b) = copy!(x, amg \ b)
 Base.A_mul_B!(b, amg::AMGSolver, x) = A_mul_B!(b, amg.A, x)
 
 
+##############################################################################
 ######### Capability to use PyAMG.jl as a preconditioner for
 ######### iterative linear algebra
 
@@ -178,7 +185,7 @@ end
 
 
 """
-`aspreconditioner(amg::AMGSolver; cycle=…)`
+`aspreconditioner(amg::AMGSolver; kwargs=...)`
 
 returns an `M::AMGPreconditioner` object that is suitable for usage
 as a preconditioner for iterative linear algebra.
@@ -186,14 +193,18 @@ as a preconditioner for iterative linear algebra.
 If `x` is a vector, then `M \ x` denotes application of the
 preconditioner (i.e. 1 MG cycle), while `M * x` denotes
 multiplication with the original matrix from which `amg` was constructed.
+
+### kwargs:
+cycle : {'V','W','F','AMLI'}
+    Type of multigrid cycle to perform in each iteration.
 """
-aspreconditioner(amg::AMGSolver; cycle=amg.cycle) =
-      AMGPreconditioner(amg.po[:aspreconditioner](cycle=cycle), amg.A)
+aspreconditioner(amg::AMGSolver; kwargs...) =
+      AMGPreconditioner(amg.po[:aspreconditioner](kwargs...), amg.A)
 
 \(amg::AMGPreconditioner, b::Vector) = amg.po[:matvec](b)
 *(amg::AMGPreconditioner, x::Vector) = amg.A * x
 
-Base.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copy!(x, amg.po[:matvec](b))
+Base.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copy!(x, amg \ b)
 Base.A_mul_B!(b, amg::AMGPreconditioner, x) = A_mul_B!(b, amg.A, x)
 
 
