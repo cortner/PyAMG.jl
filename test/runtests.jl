@@ -1,12 +1,12 @@
 
-print("check wether on travis ... ")
-if haskey(ENV, "TRAVIS")
-   println("yes: fixing PyCall installation")
-   ENV["PYTHON"] = ""
-   Pkg.build("PyCall")
-else
-   println("no")
-end
+# print("check wether on travis ... ")
+# if haskey(ENV, "TRAVIS")
+#    println("yes: fixing PyCall installation")
+#    ENV["PYTHON"] = ""
+#    Pkg.build("PyCall")
+# else
+#    println("no")
+# end
 
 using PyAMG
 using Base.Test

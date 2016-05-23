@@ -3,16 +3,16 @@
 [![Build Status](https://travis-ci.org/cortner/PyAMG.jl.svg?branch=master)](https://travis-ci.org/cortner/PyAMG.jl)
 
 Convenience wrapper module for the [PyAMG](http://pyamg.org) library.
-Requires a Python installation with scipy and pyamg installed.
-If the `Conda.jl` package manager is used, then `PyAMG` will be
+Requires a Python installation with `scipy` and `pyamg`.
+If the `Conda.jl` package manager is used, then `pyamg` will be
 automatically installed on first use. Otherwise, follow the [straightforward
 instructions](https://github.com/pyamg/pyamg). (With an Anaconda
    distribution, one should just need to type `conda install pyamg`
    in a terminal.)
 
 *Note on `0.4` vs `0.5`:* `nightly` fails on travis-ci, but this seems to be
-due to failure or required packaged. all tests pass
-under both versions on my own machine, so while I myself use only `0.4` for
+due to failure of required packages. All tests pass
+under both versions on my own machine, so while I use only `0.4` for
 now, I assume that `PyAMG.jl` can be used without difficulties on `0.5`.
 
 ## Basic Usage
@@ -79,7 +79,7 @@ IterativeSolvers.cg(A, b, M; tol=TOL)
 * `AMGPreconditioner` : encapsulates the output of `aspreconditioner`
    to use PyAMG as a preconditioner for iterative linear algebra.
 
-<!-- ### Methods
+<!-- ### Methods  TODO: write this documentation.
 * `solve` : basic solver
 * `Base.\` : single MG cycle (use PyAMG as preconditioner)
 * `set_cycle!` : set which type of cycle to use (default "V")
