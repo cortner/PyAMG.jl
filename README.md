@@ -8,10 +8,9 @@ If an Anconda distribution is used (including the `Conda.jl` package manager)
 then `pyamg` should be automatically installed on first use. Otherwise, follow
 the [straightforward instructions](https://github.com/pyamg/pyamg).
 
-*Note on `0.4` vs `0.5`:* `nightly` fails on travis-ci, but this seems to be
-due to failure of required packages. All tests pass
-under both versions on my own machine, so while I use only `0.4` for
-now, I assume that `PyAMG.jl` can be used without difficulties on `0.5`.
+*Note on failing tests:* tests on travis-ci fail, but this is due to
+failure of autmatically installing the required packages. All tests pass
+under both v0.4 and v0.5 on my own machine.
 
 ## Basic Usage
 
