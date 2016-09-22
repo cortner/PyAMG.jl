@@ -78,10 +78,10 @@ typealias RugeStubenSolver AMGSolver{RugeStuben}
 typealias SmoothedAggregationSolver AMGSolver{SmoothedAggregation}
 
 
-"""
-change the type of AMG cycle, for use with `call` or `\`.
-"""
-set_cycle!(amg, cycle) = begin amg.cycle = cycle; nothing end
+function set_kwargs!(amg::AMGSolver; kwargs...)
+   amg.kwargs = kwargs
+end
+
 
 
 """
@@ -91,9 +91,9 @@ Create a Ruge Stuben instance of `AMGSolver`; wraps
 `pyamg.ruge_stuben_solver`; see `pyamg.ruge_stuben_solver?`
 for keyword arguments.  See `?AMGSolver` for usage.
 """
-RugeStubenSolver(A::SparseMatrixCSC, kwargs...) =
-   AMGSolver(pyamg[:ruge_stuben_solver](py_csr(A), kwargs...),
-            RugeStuben(), Any[], A)
+RugeStubenSolver(A::SparseMatrixCSC; kwargs...) =
+   AMGSolver(pyamg[:ruge_stuben_solver](py_csr(A)),
+             RugeStuben(), kwargs, A)
 
 
 """
@@ -102,10 +102,9 @@ RugeStubenSolver(A::SparseMatrixCSC, kwargs...) =
 Wrapper for `pyamg.smoothed_aggregation_solver`; see `pyamg.ruge_stuben_solver?`
 for keyword arguments. See `?AMGSolver` for usage.
 """
-SmoothedAggregationSolver(A::SparseMatrixCSC, kwargs...) =
-   AMGSolver(pyamg[:smoothed_aggregation_solver](py_csr(A), kwargs...),
-            SmoothedAggregation(),
-            cycle)
+SmoothedAggregationSolver(A::SparseMatrixCSC; kwargs...) =
+   AMGSolver(pyamg[:smoothed_aggregation_solver](py_csr(A)),
+             SmoothedAggregation(), kwargs, A)
 
 
 """
@@ -145,9 +144,6 @@ arguments can either be passed directly, or can be stored in
 """
 solve(amg::AMGSolver, b; kwargs...) = amg.po[:solve](b; amg.kwargs..., kwargs...)
 
-function set_kwargs!(amg::AMGSolver; kwargs...)
-   amg.kwargs = kwargs
-end
 
 ######### Capability to use PyAMG.jl as a preconditioner for
 ######### nonlinear optimisation, sampling, etc

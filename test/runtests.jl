@@ -65,11 +65,9 @@ amg = RugeStubenSolver(A)
 x_solve = solve(amg, b, tol=1e-6, cycle="V", accel="cg")
 set_kwargs!(amg, tol=1e-6, cycle="V", accel="cg")
 x_bs = amg \ b
-x_ldiv = zeros(x_solve)
-A_ldiv_B!(x_ldiv, amg, b)
+x_ldiv = A_ldiv_B!(zeros(x_solve), amg, b)
 @assert x_solve == x_bs
 @assert x_solve == x_ldiv
-
 
 println("=================================================")
 println("Test 5: AMG as a preconditioner")
