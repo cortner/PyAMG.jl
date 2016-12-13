@@ -151,10 +151,11 @@ solve(amg::AMGSolver, b; kwargs...) = amg.po[:solve](b; amg.kwargs..., kwargs...
 # TODO: the following 4 methods still need to be tested
 
 import Base.\, Base.*
-\(amg::AMGSolver, b::Vector) = solve(amg, b)
+\(amg::AMGSolver, b::Vector) = solve(amg, b; kwargs...)
 *(amg::AMGSolver, x::Vector) = amg.A * x
 
-import Base.A_ldiv_B!, Base.A_mul_B!
+Base.A_ldiv_B(amg::AMGSolver, b) = amg \ b
+Base.A_mul_B(amg::AMGSolver, x) = amg.A * x
 Base.A_ldiv_B!(x, amg::AMGSolver, b) = copy!(x, amg \ b)
 Base.A_mul_B!(b, amg::AMGSolver, x) = A_mul_B!(b, amg.A, x)
 
