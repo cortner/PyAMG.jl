@@ -50,7 +50,13 @@ or, one can specify a different 'outer solver'
 x = solve(amg, b; tol=1e-6, accel="cg")
 ```
 
-see `?solve` for more options.
+see `?solve` for more options. In particular, note the that default keyword
+arguments can be set via `set_kwargs!` or in the construction of the AMG
+solver, which will then be used by both `\` and `solve`. E.g.,
+```julia
+amg = RugeStubenSolver(A, tol=1e-6, accel="cg")
+x = amg \ b
+```
 
 ### As Preconditioner
 
@@ -66,6 +72,22 @@ using PyAMG, IterativeSolvers
 M = aspreconditioner(RugeStubenSolver(A))
 IterativeSolvers.cg(A, b, M; tol=TOL)
 ```
+
+### Solver history
+
+To extract the solver history as a vector of residuals, use
+```
+amg = RugeStubenSolver(A)
+r = Float64[]
+x = PyAMG.solve(amg, b, residuals=r)
+@show r
+```
+Since version `3.2.1.dev0+2227b77` the residuals can also be returned for
+the blackbox solver variant.
+
+(NOTE: although `pyamg` needs residuals to be a *list*, `PyAMG.jl` will detect
+   if `residuals` is a `numpy` vector and replace it with a list, then
+   convert back to a types Julia vector.)
 
 ## List of Types and Methods
 

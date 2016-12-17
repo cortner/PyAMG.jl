@@ -60,10 +60,6 @@ To solve Ax = b:
 ```
 x = solve(amg, b, tol=1e-6, accel="cg")
 ```
-To apply a single MG cycle:
-```
-x = amg \ b
-```
 """
 type AMGSolver{T}
     po::PyObject
@@ -112,8 +108,25 @@ SmoothedAggregationSolver(A::SparseMatrixCSC; kwargs...) =
 
 PyAMG's 'blackbox' solver. See `pyamg.solve?` for `kwargs`.
 """
-solve(A::SparseMatrixCSC, b::Vector; kwargs...) =
-    pyamg[:solve]( py_csr(A), b; kwargs... )
+function solve(A::SparseMatrixCSC, b::Vector; kwargs...)::Vector{Float64}
+   # If kwargs contains :residuals, we need to do some conversions, since
+   # Python cannot append to Julia arrays (i.e. numpy arrays).
+   for (n, (key, rj)) in enumerate(kwargs)
+      if key == :residuals
+         rp = PyVector(Float64[])
+         kwargs[n] = (:residuals, rp)
+         try
+            x = pyamg[:solve]( py_csr(A), b; kwargs... )
+            append!(rj, collect(rp))
+            return x
+         catch
+            error("Something went wrong. Probably, your version of pyamg probably does not support the `residuals` keyword; please update `pyamg` (see https://github.com/pyamg/pyamg) or call `PyAMG.solve` without a `residuals` keyword.")
+         end
+      end
+   end
+   # If we are here, then we just solve and return
+   return pyamg[:solve]( py_csr(A), b; kwargs... )
+end
 
 
 """
@@ -142,7 +155,33 @@ arguments can either be passed directly, or can be stored in
          (also not tested in Julia!)
 * `residuals` : List to contain residual norms at each iteration.
 """
-solve(amg::AMGSolver, b; kwargs...) = amg.po[:solve](b; amg.kwargs..., kwargs...)
+function solve(amg::AMGSolver, b::Vector; kwargs...)::Vector{Float64}
+   # If kwargs contains :residuals, we need to do some conversions, since
+   # Python cannot append to Julia arrays (i.e. numpy arrays).
+   for (n, (key, rj)) in enumerate(kwargs)
+      if key == :residuals
+         rp = PyVector(Float64[])
+         kwargs[n] = (:residuals, rp)
+         x = amg.po[:solve](b; amg.kwargs..., kwargs...)
+         append!(rj, collect(rp))
+         return x
+      end
+   end
+   # If we are here, then we just solve and return
+   return amg.po[:solve](b; amg.kwargs..., kwargs...)
+end
+
+
+# function solve(amg::AMGSolver, b; history=false, kwargs...)
+#    if history
+#       r = PyVector(Float64[])
+#       x = amg.po[:solve](b; amg.kwargs..., kwargs..., residuals=r)
+#       return x, collect(r)
+#    else
+#       return amg.po[:solve](b; amg.kwargs..., kwargs...)
+#    end
+# end
+
 
 
 ######### Capability to use PyAMG.jl as a preconditioner for
