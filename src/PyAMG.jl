@@ -108,7 +108,7 @@ SmoothedAggregationSolver(A::SparseMatrixCSC; kwargs...) =
 
 PyAMG's 'blackbox' solver. See `pyamg.solve?` for `kwargs`.
 """
-function solve(A::SparseMatrixCSC, b::Vector; kwargs...)::Vector{Float64}
+function solve(A::SparseMatrixCSC, b::Vector; kwargs...)
    # If kwargs contains :residuals, we need to do some conversions, since
    # Python cannot append to Julia arrays (i.e. numpy arrays).
    for (n, (key, rj)) in enumerate(kwargs)
@@ -118,14 +118,14 @@ function solve(A::SparseMatrixCSC, b::Vector; kwargs...)::Vector{Float64}
          try
             x = pyamg[:solve]( py_csr(A), b; kwargs... )
             append!(rj, collect(rp))
-            return x
+            return x::Vector{Float64}
          catch
             error("Something went wrong. Probably, your version of pyamg probably does not support the `residuals` keyword; please update `pyamg` (see https://github.com/pyamg/pyamg) or call `PyAMG.solve` without a `residuals` keyword.")
          end
       end
    end
    # If we are here, then we just solve and return
-   return pyamg[:solve]( py_csr(A), b; kwargs... )
+   return pyamg[:solve]( py_csr(A), b; kwargs... )::Vector{Float64}
 end
 
 
@@ -155,7 +155,7 @@ arguments can either be passed directly, or can be stored in
          (also not tested in Julia!)
 * `residuals` : List to contain residual norms at each iteration.
 """
-function solve(amg::AMGSolver, b::Vector; kwargs...)::Vector{Float64}
+function solve(amg::AMGSolver, b::Vector; kwargs...)
    # If kwargs contains :residuals, we need to do some conversions, since
    # Python cannot append to Julia arrays (i.e. numpy arrays).
    for (n, (key, rj)) in enumerate(kwargs)
@@ -164,11 +164,11 @@ function solve(amg::AMGSolver, b::Vector; kwargs...)::Vector{Float64}
          kwargs[n] = (:residuals, rp)
          x = amg.po[:solve](b; amg.kwargs..., kwargs...)
          append!(rj, collect(rp))
-         return x
+         return x::Vector{Float64}
       end
    end
    # If we are here, then we just solve and return
-   return amg.po[:solve](b; amg.kwargs..., kwargs...)
+   return amg.po[:solve](b; amg.kwargs..., kwargs...)::Vector{Float64}
 end
 
 
