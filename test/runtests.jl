@@ -28,7 +28,7 @@ print("PyAMG: ")
 @time x3 = PyAMG.solve(A, b; tol=1e-12, verb=false)
 println("|x_\\ - x_amg|_∞ = ", norm(x3-x1, Inf))
 println("|A x_amg - b|_∞ = ", norm(A*x2 - b, Inf))
-@assert norm(x3-x1, Inf) < 1e-10
+@test norm(x3-x1, Inf) < 1e-10
 
 println("=================================================")
 println("Test 2: Julia `\\` vs PyAMG Blackbox `solve` (3D)")
@@ -41,7 +41,7 @@ print("PyAMG: ")
 @time x3 = PyAMG.solve(A, b; tol=1e-12, verb=false)
 println("|x_\\ - x_amg|_∞ = ", norm(x3-x1, Inf))
 println("|A x_amg - b|_∞ = ", norm(A*x2 - b, Inf))
-@assert norm(x3-x1, Inf) < 1e-9
+@test norm(x3-x1, Inf) < 1e-9
 
 println("=================================================")
 println("Test 3: RugeStubenSolver (3D)")
@@ -56,7 +56,7 @@ print("Second solve: (tol 1e-9)")
 print("Third solve: (tol 1e-6)")
 @time x3 = solve(amg, b; tol=1e-6)
 println("|A x_amg - b|_∞ = ", norm(A * x3 - b, Inf))
-@assert norm(A * x2 - b, Inf) < 1e-8
+@test norm(A * x2 - b, Inf) < 1e-8
 
 println("=================================================")
 println("Test 4: \\, ldiv, and kwargs")
@@ -66,8 +66,8 @@ x_solve = solve(amg, b, tol=1e-6, cycle="V", accel="cg")
 set_kwargs!(amg, tol=1e-6, cycle="V", accel="cg")
 x_bs = amg \ b
 x_ldiv = A_ldiv_B!(zeros(x_solve), amg, b)
-@assert x_solve == x_bs
-@assert x_solve == x_ldiv
+@test x_solve == x_bs
+@test x_solve == x_ldiv
 
 println("=================================================")
 println("Test 5: AMG as a preconditioner")
@@ -91,6 +91,6 @@ x = A \ b
 println("|x_cg-x| = ", norm(x_cg - x), " \n",
          "|x_pcg-x| = ", norm(x_pcg - x), "\n",
          "|x_pyamg-x| = ", norm(x_pyamg - x) )
-@assert norm(x_cg - x) < 1e-5
-@assert norm(x_pcg - x) < 1e-5
-@assert norm(x_pyamg - x) < 1e-5
+@test norm(x_cg - x) < 1e-5
+@test norm(x_pcg - x) < 1e-5
+@test norm(x_pyamg - x) < 1e-5
