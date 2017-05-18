@@ -91,6 +91,8 @@ the blackbox solver variant.
 
 ## List of Types and Methods
 
+(this section is incomplete)
+
 ### Types
 
 * `AMGSolver{T}` : encapsulates the pyamg solver PyObject
