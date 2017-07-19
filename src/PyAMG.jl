@@ -9,7 +9,6 @@ export RugeStubenSolver,
 
 
 using PyCall
-using Compat
 
 # @pyimport scipy.sparse as scipy_sparse
 # @pyimport pyamg
@@ -71,8 +70,8 @@ end
 
 type RugeStuben end
 type SmoothedAggregation end
-@compat const RugeStubenSolver = AMGSolver{RugeStuben}
-@compat const SmoothedAggregationSolver = AMGSolver{SmoothedAggregation}
+const RugeStubenSolver = AMGSolver{RugeStuben}
+const SmoothedAggregationSolver = AMGSolver{SmoothedAggregation}
 
 
 function set_kwargs!(amg::AMGSolver; kwargs...)
