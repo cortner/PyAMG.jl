@@ -1,2 +1,3 @@
 julia 0.5
 PyCall
+Compat 0.18.0
