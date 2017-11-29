@@ -17,6 +17,10 @@ function L3d(N)
   return A, b
 end
 
+
+@testset "PyAMG" begin
+
+
 println("=================================================")
 println("Test 1: Julia `\\` vs PyAMG Blackbox `solve` (2D) Laplacian")
 A, b = L2d(100)
@@ -77,15 +81,15 @@ A, b = L2d(100)
 amg = RugeStubenSolver(A)
 M = aspreconditioner(amg)
 using IterativeSolvers
-TOL = 1e-4
+TOL = 1e-6
 println("Plain CG:")
-@time x_cg = IterativeSolvers.cg(A, b; tol=TOL)
-@time x_cg = IterativeSolvers.cg(A, b; tol=TOL)
+x_cg = IterativeSolvers.cg(A, b; tol=TOL, maxiter = 1000)
+@time x_cg = IterativeSolvers.cg(A, b; tol=TOL, maxiter = 1000)
 println("PyAMG-preconditionerd CG:  (see `aspreconditioner`)")
-@time x_pcg = IterativeSolvers.cg(A, b; Pl=M, tol=TOL)
-@time x_pcg = IterativeSolvers.cg(A, b; Pl=M, tol=TOL)
+x_pcg = IterativeSolvers.cg(A, b; Pl=M, tol=TOL, maxiter = 1000)
+@time x_pcg = IterativeSolvers.cg(A, b; Pl=M, tol=TOL, maxiter = 1000)
 println("PyAMG solver")
-@time x_pyamg = PyAMG.solve(amg, b; tol=TOL*1e-2, accel="cg")
+x_pyamg = PyAMG.solve(amg, b; tol=TOL*1e-2, accel="cg")
 @time x_pyamg = PyAMG.solve(amg, b; tol=TOL*1e-2, accel="cg")
 x = A \ b
 println("|x_cg-x| = ", norm(x_cg - x), " \n",
@@ -94,3 +98,5 @@ println("|x_cg-x| = ", norm(x_cg - x), " \n",
 @test norm(x_cg - x) < 1e-5
 @test norm(x_pcg - x) < 1e-5
 @test norm(x_pyamg - x) < 1e-5
+
+end
