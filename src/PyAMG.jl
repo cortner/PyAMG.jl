@@ -46,7 +46,7 @@ py_csr(A::SparseMatrixCSC) = py_csc(A)[:tocsr]()
 
 
 """
-`type AMGSolver{T}`
+`struct AMGSolver{T}`
 
 Encapsulates the AMG solver types implemented in PyAMG.
 
@@ -61,15 +61,15 @@ To solve Ax = b:
 x = solve(amg, b, tol=1e-6, accel="cg")
 ```
 """
-type AMGSolver{T}
+struct AMGSolver{T}
     po::PyObject
     id::T
     kwargs::Vector
     A::SparseMatrixCSC
 end
 
-type RugeStuben end
-type SmoothedAggregation end
+struct RugeStuben end
+struct SmoothedAggregation end
 const RugeStubenSolver = AMGSolver{RugeStuben}
 const SmoothedAggregationSolver = AMGSolver{SmoothedAggregation}
 
@@ -202,7 +202,7 @@ Base.A_mul_B!(b, amg::AMGSolver, x) = A_mul_B!(b, amg.A, x)
 ######### iterative linear algebra
 
 """
-`type AMGPreconditioner`
+`struct AMGPreconditioner`
 
 returned by `aspreconditioner(amg)`, when `amg` is of type `AMGSolver`.
 This stores `PyObject` that acts as a linear operator. This type
@@ -212,7 +212,7 @@ iterative linear algebra.
 Overloaded methods that can be used with an `AMGPreconditioner` are
 `\`, `*`, `A_ldiv_B!`, `A_mul_B!`
 """
-type AMGPreconditioner
+struct AMGPreconditioner
   po::PyObject
   A::SparseMatrixCSC
 end
