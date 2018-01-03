@@ -27,8 +27,8 @@ function py_csc(A::SparseMatrixCSC)
    Apy = scipy_sparse[:csc_matrix](size(A))
    # write the values and indices
    Apy[:data] = copy(A.nzval)
-   Apy[:indices] = A.rowval - 1
-   Apy[:indptr] = A.colptr - 1
+   Apy[:indices] = A.rowval .- 1
+   Apy[:indptr] = A.colptr .- 1
    return Apy
 end
 
@@ -61,7 +61,7 @@ To solve Ax = b:
 x = solve(amg, b, tol=1e-6, accel="cg")
 ```
 """
-struct AMGSolver{T}
+mutable struct AMGSolver{T}
     po::PyObject
     id::T
     kwargs::Vector
@@ -75,7 +75,7 @@ const SmoothedAggregationSolver = AMGSolver{SmoothedAggregation}
 
 
 function set_kwargs!(amg::AMGSolver; kwargs...)
-   amg.kwargs = kwargs
+   amg.kwargs = collect(kwargs)
 end
 
 
@@ -89,7 +89,7 @@ for keyword arguments.  See `?AMGSolver` for usage.
 """
 RugeStubenSolver(A::SparseMatrixCSC; kwargs...) =
    AMGSolver(pyamg[:ruge_stuben_solver](py_csr(A)),
-             RugeStuben(), kwargs, A)
+             RugeStuben(), collect(Any, kwargs), A)
 
 
 """
@@ -100,7 +100,7 @@ for keyword arguments. See `?AMGSolver` for usage.
 """
 SmoothedAggregationSolver(A::SparseMatrixCSC; kwargs...) =
    AMGSolver(pyamg[:smoothed_aggregation_solver](py_csr(A)),
-             SmoothedAggregation(), kwargs, A)
+             SmoothedAggregation(), collect(Any, kwargs), A)
 
 
 """
@@ -193,7 +193,7 @@ import Base.\, Base.*
 \(amg::AMGSolver, b::Vector) = solve(amg, b; amg.kwargs...)
 *(amg::AMGSolver, x::Vector) = amg.A * x
 
-Base.A_ldiv_B!(x, amg::AMGSolver, b) = copy!(x, amg \ b)
+Base.A_ldiv_B!(x, amg::AMGSolver, b) = copyto!(x, amg \ b)
 Base.A_mul_B!(b, amg::AMGSolver, x) = A_mul_B!(b, amg.A, x)
 
 
@@ -206,7 +206,7 @@ Base.A_mul_B!(b, amg::AMGSolver, x) = A_mul_B!(b, amg.A, x)
 
 returned by `aspreconditioner(amg)`, when `amg` is of type `AMGSolver`.
 This stores `PyObject` that acts as a linear operator. This type
-should be used when `PyAMG` should typically be used as a preconditioner for
+should be used when `PyAMG` is used as a preconditioner for
 iterative linear algebra.
 
 Overloaded methods that can be used with an `AMGPreconditioner` are
@@ -218,27 +218,29 @@ struct AMGPreconditioner
 end
 
 
-"""
-`aspreconditioner(amg::AMGSolver; kwargs=...)`
+# TODO: there is a problem with this string???
+# """
+# `aspreconditioner(amg::AMGSolver; kwargs=...)`
+#
+# returns an `M::AMGPreconditioner` object that is suitable for usage
+# as a preconditioner for iterative linear algebra.
+#
+# If `x` is a vector, then `M \ x` denotes application of the
+# preconditioner (i.e. 1 MG cycle), while `M * x` denotes
+# multiplication with the original matrix from which `amg` was constructed.
+#
+# ### kwargs:
+# cycle : {'V','W','F','AMLI'}
+#     Type of multigrid cycle to perform in each iteration.
+# """
 
-returns an `M::AMGPreconditioner` object that is suitable for usage
-as a preconditioner for iterative linear algebra.
-
-If `x` is a vector, then `M \ x` denotes application of the
-preconditioner (i.e. 1 MG cycle), while `M * x` denotes
-multiplication with the original matrix from which `amg` was constructed.
-
-### kwargs:
-cycle : {'V','W','F','AMLI'}
-    Type of multigrid cycle to perform in each iteration.
-"""
 aspreconditioner(amg::AMGSolver; kwargs...) =
       AMGPreconditioner(amg.po[:aspreconditioner](kwargs...), amg.A)
 
 \(amg::AMGPreconditioner, b::Vector) = amg.po[:matvec](b)
 *(amg::AMGPreconditioner, x::Vector) = amg.A * x
 
-Base.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copy!(x, amg \ b)
+Base.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copyto!(x, amg \ b)
 Base.A_mul_B!(b, amg::AMGPreconditioner, x) = A_mul_B!(b, amg.A, x)
 
 
