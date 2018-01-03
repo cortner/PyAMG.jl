@@ -1,6 +1,9 @@
 
 # PyAMG.jl
 
+**NOTE:** the `master` branch is for Julia v0.7 and v1.0 only, for
+Julia v0.5 and v0.6 see the `jv0.6` branch.
+
 [![Build Status](https://travis-ci.org/cortner/PyAMG.jl.svg?branch=master)](https://travis-ci.org/cortner/PyAMG.jl)
 
 Convenience wrapper module for the [PyAMG](http://pyamg.org) library.
