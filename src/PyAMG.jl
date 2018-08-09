@@ -217,23 +217,20 @@ struct AMGPreconditioner
   A::SparseMatrixCSC
 end
 
+"""
+`aspreconditioner(amg::AMGSolver; kwargs=...)`
 
-# TODO: there is a problem with this string???
-# """
-# `aspreconditioner(amg::AMGSolver; kwargs=...)`
-#
-# returns an `M::AMGPreconditioner` object that is suitable for usage
-# as a preconditioner for iterative linear algebra.
-#
-# If `x` is a vector, then `M \ x` denotes application of the
-# preconditioner (i.e. 1 MG cycle), while `M * x` denotes
-# multiplication with the original matrix from which `amg` was constructed.
-#
-# ### kwargs:
-# cycle : {'V','W','F','AMLI'}
-#     Type of multigrid cycle to perform in each iteration.
-# """
+returns an `M::AMGPreconditioner` object that is suitable for usage
+as a preconditioner for iterative linear algebra.
 
+If `x` is a vector, then `M \\ x` denotes application of the
+preconditioner (i.e. 1 MG cycle), while `M * x` denotes
+multiplication with the original matrix from which `amg` was constructed.
+
+### kwargs:
+cycle : {'V','W','F','AMLI'}
+    Type of multigrid cycle to perform in each iteration.
+"""
 aspreconditioner(amg::AMGSolver; kwargs...) =
       AMGPreconditioner(amg.po[:aspreconditioner](kwargs...), amg.A)
 
