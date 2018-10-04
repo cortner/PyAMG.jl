@@ -1,5 +1,7 @@
 
+using LinearAlgebra
 using PyAMG
+using SparseArrays
 using Test
 
 L1d(N) = spdiagm( -1 => -ones(N-1), 0 => 2*ones(N), 1 => -ones(N-1) ) * N^2

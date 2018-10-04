@@ -8,12 +8,18 @@ export RugeStubenSolver,
        set_kwargs!
 
 
+using LinearAlgebra
 using PyCall
+using SparseArrays
 
 # @pyimport scipy.sparse as scipy_sparse
 # @pyimport pyamg
-scipy_sparse = pyimport_conda("scipy.sparse", "scipy")
-pyamg = pyimport_conda("pyamg", "pyamg")
+pyamg = PyNULL()
+scipy_sparse = PyNULL()
+function __init__()
+    copy!(pyamg, pyimport_conda("pyamg", "pyamg"))
+    copy!(scipy_sparse, pyimport_conda("scipy.sparse", "scipy"))
+end
 
 
 """
@@ -193,8 +199,9 @@ import Base.\, Base.*
 \(amg::AMGSolver, b::Vector) = solve(amg, b; amg.kwargs...)
 *(amg::AMGSolver, x::Vector) = amg.A * x
 
-Base.A_ldiv_B!(x, amg::AMGSolver, b) = copyto!(x, amg \ b)
-Base.A_mul_B!(b, amg::AMGSolver, x) = A_mul_B!(b, amg.A, x)
+LinearAlgebra.A_ldiv_B!(x, amg::AMGSolver, b) = copyto!(x, amg \ b)
+LinearAlgebra.ldiv!(x, amg::AMGSolver, b) = LinearAlgebra.A_ldiv_B!(x, amg, b)
+LinearAlgebra.A_mul_B!(b, amg::AMGSolver, x) = A_mul_B!(b, amg.A, x)
 
 
 ##############################################################################
@@ -237,8 +244,9 @@ aspreconditioner(amg::AMGSolver; kwargs...) =
 \(amg::AMGPreconditioner, b::Vector) = amg.po[:matvec](b)
 *(amg::AMGPreconditioner, x::Vector) = amg.A * x
 
-Base.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copyto!(x, amg \ b)
-Base.A_mul_B!(b, amg::AMGPreconditioner, x) = A_mul_B!(b, amg.A, x)
+LinearAlgebra.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copyto!(x, amg \ b)
+LinearAlgebra.ldiv!(x, amg::AMGPreconditioner, b) = LinearAlgebra.A_ldiv_B!(x, amg, b)
+LinearAlgebra.A_mul_B!(b, amg::AMGPreconditioner, x) = A_mul_B!(b, amg.A, x)
 
 
 
