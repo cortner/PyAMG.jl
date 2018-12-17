@@ -198,7 +198,9 @@ end
 import Base.\, Base.*
 \(amg::AMGSolver, b::Vector) = solve(amg, b; amg.kwargs...)
 *(amg::AMGSolver, x::Vector) = amg.A * x
+
 LinearAlgebra.ldiv!(x, amg::AMGSolver, b) = copyto!(x, amg \ b)
+LinearAlgebra.mul!(b, amg::AMGSolver, x) = mul!(b, amg.A, x)
 
 
 ##############################################################################
@@ -240,7 +242,9 @@ aspreconditioner(amg::AMGSolver; kwargs...) =
 
 \(amg::AMGPreconditioner, b::Vector) = amg.po[:matvec](b)
 *(amg::AMGPreconditioner, x::Vector) = amg.A * x
+
 LinearAlgebra.ldiv!(x, amg::AMGPreconditioner, b) = copyto!(x, amg \ b)
+LinearAlgebra.mul!(b, amg::AMGPreconditioner, x) = mul!(b, amg.A, x)
 
 
 
