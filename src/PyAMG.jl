@@ -12,8 +12,8 @@ using LinearAlgebra
 using PyCall
 using SparseArrays
 
-# @pyimport scipy.sparse as scipy_sparse
-# @pyimport pyamg
+# scipy_sparse = pyimport("scipy.sparse")
+# pyamg = pyimport("pyamg")
 pyamg = PyNULL()
 scipy_sparse = PyNULL()
 function __init__()
@@ -76,8 +76,8 @@ end
 
 struct RugeStuben end
 struct SmoothedAggregation end
-const RugeStubenSolver = AMGSolver{RugeStuben}
-const SmoothedAggregationSolver = AMGSolver{SmoothedAggregation}
+global const RugeStubenSolver = AMGSolver{RugeStuben}
+global const SmoothedAggregationSolver = AMGSolver{SmoothedAggregation}
 
 
 function set_kwargs!(amg::AMGSolver; kwargs...)
@@ -198,10 +198,7 @@ end
 import Base.\, Base.*
 \(amg::AMGSolver, b::Vector) = solve(amg, b; amg.kwargs...)
 *(amg::AMGSolver, x::Vector) = amg.A * x
-
-LinearAlgebra.A_ldiv_B!(x, amg::AMGSolver, b) = copyto!(x, amg \ b)
-LinearAlgebra.ldiv!(x, amg::AMGSolver, b) = LinearAlgebra.A_ldiv_B!(x, amg, b)
-LinearAlgebra.A_mul_B!(b, amg::AMGSolver, x) = A_mul_B!(b, amg.A, x)
+LinearAlgebra.ldiv!(x, amg::AMGSolver, b) = copyto!(x, amg \ b)
 
 
 ##############################################################################
@@ -217,7 +214,7 @@ should be used when `PyAMG` is used as a preconditioner for
 iterative linear algebra.
 
 Overloaded methods that can be used with an `AMGPreconditioner` are
-`\`, `*`, `A_ldiv_B!`, `A_mul_B!`
+`\`, `*`
 """
 struct AMGPreconditioner
   po::PyObject
@@ -243,10 +240,7 @@ aspreconditioner(amg::AMGSolver; kwargs...) =
 
 \(amg::AMGPreconditioner, b::Vector) = amg.po[:matvec](b)
 *(amg::AMGPreconditioner, x::Vector) = amg.A * x
-
-LinearAlgebra.A_ldiv_B!(x, amg::AMGPreconditioner, b) = copyto!(x, amg \ b)
-LinearAlgebra.ldiv!(x, amg::AMGPreconditioner, b) = LinearAlgebra.A_ldiv_B!(x, amg, b)
-LinearAlgebra.A_mul_B!(b, amg::AMGPreconditioner, x) = A_mul_B!(b, amg.A, x)
+LinearAlgebra.ldiv!(x, amg::AMGPreconditioner, b) = copyto!(x, amg \ b)
 
 
 
@@ -271,10 +265,10 @@ function diagnostics(A::SparseMatrixCSC; kwargs...)
     # try to import solver_diagnostics
     try
         unshift!(PyVector(pyimport("sys")["path"]), "");
-        @pyimport solver_diagnostics
+        solver_diagnostics = pyimport("solver_diagnostics")
     catch
         error("""
-              I tried to @pyimport solver_diagnostics, but it fails.
+              I tried to pyimport solver_diagnostics, but it fails.
               This is probably because `solver_diagnostics.py` is not
               in the current directory. Please see
               `?PyAMG.diagonistics` on how to use this function.

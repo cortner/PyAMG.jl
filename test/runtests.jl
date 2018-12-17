@@ -68,33 +68,32 @@ amg = RugeStubenSolver(A)
 x_solve = solve(amg, b, tol=1e-6, cycle="V", accel="cg")
 set_kwargs!(amg, tol=1e-6, cycle="V", accel="cg")
 x_bs = amg \ b
-x_ldiv = A_ldiv_B!(similar(b), amg, b)
+x_ldiv = LinearAlgebra.ldiv!(similar(b), amg, b)
 @test x_solve == x_bs
 @test x_solve == x_ldiv
 
-# TODO: IterativeSolvers.jl is not up to date yet
-# println("=================================================")
-# println("Test 5: AMG as a preconditioner")
-# println("        100 x 100 Dirichlet problem, TOL = 1e-4")
-# println("        PyAMG vs CG vs PCG  (using IterativeSolvers)")
-# A, b = L2d(100)
-# amg = RugeStubenSolver(A)
-# M = aspreconditioner(amg)
-# using IterativeSolvers
-# TOL = 1e-4
-# println("Plain CG:")
-# @time x_cg = IterativeSolvers.cg(A, b; tol=TOL)
-# @time x_cg = IterativeSolvers.cg(A, b; tol=TOL)
-# println("PyAMG-preconditionerd CG:  (see `aspreconditioner`)")
-# @time x_pcg = IterativeSolvers.cg(A, b; Pl=M, tol=TOL)
-# @time x_pcg = IterativeSolvers.cg(A, b; Pl=M, tol=TOL)
-# println("PyAMG solver")
-# @time x_pyamg = PyAMG.solve(amg, b; tol=TOL*1e-2, accel="cg")
-# @time x_pyamg = PyAMG.solve(amg, b; tol=TOL*1e-2, accel="cg")
-# x = A \ b
-# println("|x_cg-x| = ", norm(x_cg - x), " \n",
-#          "|x_pcg-x| = ", norm(x_pcg - x), "\n",
-#          "|x_pyamg-x| = ", norm(x_pyamg - x) )
-# @test norm(x_cg - x) < 1e-5
-# @test norm(x_pcg - x) < 1e-5
-# @test norm(x_pyamg - x) < 1e-5
+println("=================================================")
+println("Test 5: AMG as a preconditioner")
+println("        100 x 100 Dirichlet problem, TOL = 1e-4")
+println("        PyAMG vs CG vs PCG  (using IterativeSolvers)")
+A, b = L2d(100)
+amg = RugeStubenSolver(A)
+M = aspreconditioner(amg)
+using IterativeSolvers
+TOL = 1e-4
+println("Plain CG:")
+@time x_cg = IterativeSolvers.cg(A, b; tol=TOL)
+@time x_cg = IterativeSolvers.cg(A, b; tol=TOL)
+println("PyAMG-preconditionerd CG:  (see `aspreconditioner`)")
+@time x_pcg = IterativeSolvers.cg(A, b; Pl=M, tol=TOL)
+@time x_pcg = IterativeSolvers.cg(A, b; Pl=M, tol=TOL)
+println("PyAMG solver")
+@time x_pyamg = PyAMG.solve(amg, b; tol=TOL*1e-2, accel="cg")
+@time x_pyamg = PyAMG.solve(amg, b; tol=TOL*1e-2, accel="cg")
+x = A \ b
+println("|x_cg-x| = ", norm(x_cg - x), " \n",
+         "|x_pcg-x| = ", norm(x_pcg - x), "\n",
+         "|x_pyamg-x| = ", norm(x_pyamg - x) )
+@test norm(x_cg - x) < 1e-5
+@test norm(x_pcg - x) < 1e-5
+@test norm(x_pyamg - x) < 1e-5
