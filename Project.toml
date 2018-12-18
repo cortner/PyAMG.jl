@@ -1,0 +1,16 @@
+name = "PyAMG"
+uuid = "acb84fbc-022e-11e9-3aa1-eb32b4f5163e"
+authors = ["Tristan Konolige <tristan.konolige@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
+[extra]
+IterativeSolvers = "42fd0dbc-a981-5370-80f2-aaf504508153"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[test]
+test = ["IterativeSovlers", "Test"]
