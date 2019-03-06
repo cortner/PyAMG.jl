@@ -12,8 +12,6 @@ using LinearAlgebra
 using PyCall
 using SparseArrays
 
-# scipy_sparse = pyimport("scipy.sparse")
-# pyamg = pyimport("pyamg")
 pyamg = PyNULL()
 scipy_sparse = PyNULL()
 function __init__()
@@ -30,11 +28,11 @@ Takes a Julia CSC matrix and converts it into `PyObject`, which stores a
 """
 function py_csc(A::SparseMatrixCSC)
    # create an empty sparse matrix in Python
-   Apy = scipy_sparse[:csc_matrix](size(A))
+   Apy = scipy_sparse.csc_matrix(size(A))
    # write the values and indices
-   Apy[:data] = copy(A.nzval)
-   Apy[:indices] = A.rowval .- 1
-   Apy[:indptr] = A.colptr .- 1
+   Apy.data = copy(A.nzval)
+   Apy.indices = A.rowval .- 1
+   Apy.indptr = A.colptr .- 1
    return Apy
 end
 
@@ -48,7 +46,7 @@ calls `tocsr()`)
 
 TODO: this seems extremely inefficient and should at some point be fixed.
 """
-py_csr(A::SparseMatrixCSC) = py_csc(A)[:tocsr]()
+py_csr(A::SparseMatrixCSC) = py_csc(A).tocsr()
 
 
 """
@@ -94,7 +92,7 @@ Create a Ruge Stuben instance of `AMGSolver`; wraps
 for keyword arguments.  See `?AMGSolver` for usage.
 """
 RugeStubenSolver(A::SparseMatrixCSC; kwargs...) =
-   AMGSolver(pyamg[:ruge_stuben_solver](py_csr(A)),
+   AMGSolver(pyamg.ruge_stuben_solver(py_csr(A)),
              RugeStuben(), collect(Any, kwargs), A)
 
 
@@ -105,7 +103,7 @@ Wrapper for `pyamg.smoothed_aggregation_solver`; see `pyamg.ruge_stuben_solver?`
 for keyword arguments. See `?AMGSolver` for usage.
 """
 SmoothedAggregationSolver(A::SparseMatrixCSC; kwargs...) =
-   AMGSolver(pyamg[:smoothed_aggregation_solver](py_csr(A)),
+   AMGSolver(pyamg.smoothed_aggregation_solver(py_csr(A)),
              SmoothedAggregation(), collect(Any, kwargs), A)
 
 
@@ -122,7 +120,7 @@ function solve(A::SparseMatrixCSC, b::Vector; kwargs...)
          rp = PyVector(Float64[])
          kwargs[n] = (:residuals, rp)
          try
-            x = pyamg[:solve]( py_csr(A), b; kwargs... )
+            x = pyamg.solve( py_csr(A), b; kwargs... )
             append!(rj, collect(rp))
             return x::Vector{Float64}
          catch
@@ -131,7 +129,7 @@ function solve(A::SparseMatrixCSC, b::Vector; kwargs...)
       end
    end
    # If we are here, then we just solve and return
-   return pyamg[:solve]( py_csr(A), b; kwargs... )::Vector{Float64}
+   return pyamg.solve( py_csr(A), b; kwargs... )::Vector{Float64}
 end
 
 
@@ -164,27 +162,24 @@ arguments can either be passed directly, or can be stored in
 function solve(amg::AMGSolver, b::Vector; kwargs...)
    # If kwargs contains :residuals, we need to do some conversions, since
    # Python cannot append to Julia arrays (i.e. numpy arrays).
-   for (n, (key, rj)) in enumerate(kwargs)
-      if key == :residuals
-         rp = PyVector(Float64[])
-         kwargs[n] = (:residuals, rp)
-         x = amg.po[:solve](b; amg.kwargs..., kwargs...)
-         append!(rj, collect(rp))
-         return x::Vector{Float64}
-      end
+   if haskey(kwargs, :residuals)
+      rp = PyVector(Float64[])
+      x = amg.po.solve(b; amg.kwargs..., kwargs..., residuals=rp)
+      append!(kwargs[:residuals], collect(rp))
+      return x::Vector{Float64}
    end
    # If we are here, then we just solve and return
-   return amg.po[:solve](b; amg.kwargs..., kwargs...)::Vector{Float64}
+   return amg.po.solve(b; amg.kwargs..., kwargs...)::Vector{Float64}
 end
 
 
 # function solve(amg::AMGSolver, b; history=false, kwargs...)
 #    if history
 #       r = PyVector(Float64[])
-#       x = amg.po[:solve](b; amg.kwargs..., kwargs..., residuals=r)
+#       x = amg.po.solve(b; amg.kwargs..., kwargs..., residuals=r)
 #       return x, collect(r)
 #    else
-#       return amg.po[:solve](b; amg.kwargs..., kwargs...)
+#       return amg.po.solve(b; amg.kwargs..., kwargs...)
 #    end
 # end
 
@@ -238,9 +233,9 @@ cycle : {'V','W','F','AMLI'}
     Type of multigrid cycle to perform in each iteration.
 """
 aspreconditioner(amg::AMGSolver; kwargs...) =
-      AMGPreconditioner(amg.po[:aspreconditioner](kwargs...), amg.A)
+      AMGPreconditioner(amg.po.aspreconditioner(kwargs...), amg.A)
 
-\(amg::AMGPreconditioner, b::Vector) = amg.po[:matvec](b)
+\(amg::AMGPreconditioner, b::Vector) = amg.po.matvec(b)
 *(amg::AMGPreconditioner, x::Vector) = amg.A * x
 
 LinearAlgebra.ldiv!(x, amg::AMGPreconditioner, b) = copyto!(x, amg \ b)

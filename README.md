@@ -1,9 +1,6 @@
 
 # PyAMG.jl
 
-**NOTE:** the `master` branch is for Julia v0.7 and v1.0 only, for
-Julia v0.5 and v0.6 see the `jv0.6` branch.
-
 [![Build Status](https://travis-ci.org/cortner/PyAMG.jl.svg?branch=master)](https://travis-ci.org/cortner/PyAMG.jl)
 
 Convenience wrapper module for the [PyAMG](http://pyamg.org) library.
@@ -22,9 +19,13 @@ In all examples it is assumed that `A` is a sparse matrix
 and `b` a vector and `amg` is an `AMGSolver` instance constructed from `A`.
 The classical example would be the Dirichlet problem on a square,
 ```julia
+using SparseArrays, LinearAlgebra
 N = 100
-L1 = spdiagm((-ones(N-1), 2*ones(N), -ones(N-1)), (-1,0,1), N, N) * N^2
-A = kron(speye(N), L1) + kron(L1, speye(N))
+L1 = spdiagm( -1 =>  -ones(N-1),
+               0 => 2*ones(N),
+               1 =>  -ones(N-1) ) * N^2
+Id = sparse(1.0*I, N, N)
+A = kron(Id, L1) + kron(L1, Id)
 b = ones(size(A,1))
 ```
 
@@ -72,6 +73,7 @@ The line `M \ b` then performes a single MG cycle.
 This is e.g. compatible with the `IterativeSolvers` package:
 ```julia
 using PyAMG, IterativeSolvers
+TOL = 1e-3
 M = aspreconditioner(RugeStubenSolver(A))
 IterativeSolvers.cg(A, b, M; tol=TOL)
 ```
