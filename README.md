@@ -3,7 +3,7 @@
 
 [![Build Status](https://travis-ci.org/cortner/PyAMG.jl.svg?branch=master)](https://travis-ci.org/cortner/PyAMG.jl)
 
-Convenience wrapper module for the [PyAMG](http://pyamg.github.io/) library.
+Convenience wrapper module for the [PyAMG](https://pyamg.readthedocs.io/en/latest/) library.
 Requires a Python installation with `scipy` and `pyamg`.
 If an Anconda distribution is used (including the `Conda.jl` package manager)
 then `pyamg` should be automatically installed on first use. Otherwise, follow
