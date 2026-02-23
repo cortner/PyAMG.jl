@@ -1,6 +1,8 @@
 
 # PyAMG.jl
 
+**THIS PACKAGE IS NO LONGER MAINTAINED**
+
 [![Build Status](https://travis-ci.org/cortner/PyAMG.jl.svg?branch=master)](https://travis-ci.org/cortner/PyAMG.jl)
 
 Convenience wrapper module for the [PyAMG](https://pyamg.readthedocs.io/en/latest/) library.
