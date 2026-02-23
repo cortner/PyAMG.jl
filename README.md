@@ -96,19 +96,37 @@ the blackbox solver variant.
 
 ## List of Types and Methods
 
-(this section is incomplete)
-
 ### Types
 
-* `AMGSolver{T}` : encapsulates the pyamg solver PyObject
-* `RugeStubenSolver` : typealias for `AMGSolver{RugeStuben}`
-* `SmoothedAggregationSolver` : typealias for `AMGSolver{SmoothedAggregation}`
-* `AMGPreconditioner` : encapsulates the output of `aspreconditioner`
-   to use PyAMG as a preconditioner for iterative linear algebra.
+* `AMGSolver{T}` : encapsulates the PyAMG solver as a `PyObject`; parameterised
+  by a solver-type tag (`RugeStuben` or `SmoothedAggregation`).
+* `RugeStubenSolver` : alias for `AMGSolver{RugeStuben}`; wraps
+  `pyamg.ruge_stuben_solver`.
+* `SmoothedAggregationSolver` : alias for `AMGSolver{SmoothedAggregation}`; wraps
+  `pyamg.smoothed_aggregation_solver`.
+* `AMGPreconditioner` : returned by `aspreconditioner(amg)`; stores the PyAMG
+  linear-operator object for use as a preconditioner in iterative solvers.
 
-<!-- ### Methods  TODO: write this documentation.
-* `solve` : basic solver
-* `Base.\` : single MG cycle (use PyAMG as preconditioner)
-* `set_cycle!` : set which type of cycle to use (default "V")
-* `diagnostics` : determine an optimal configuration for a given matrix
-* -->
+### Methods
+
+* `solve(A, b; kwargs...)` : blackbox solver — constructs an AMG hierarchy and
+  solves `Ax = b` in one call; wraps `pyamg.solve`.
+* `solve(amg, b; kwargs...)` : solve `Ax = b` using an existing `AMGSolver`;
+  keyword arguments are merged with any defaults stored in `amg`.
+* `set_kwargs!(amg; kwargs...)` : store default keyword arguments in an
+  `AMGSolver` instance.  These are used automatically by `\` and `solve`.
+* `aspreconditioner(amg; cycle="V")` : return an `AMGPreconditioner`; the
+  `cycle` keyword selects the multigrid cycle type (`"V"`, `"W"`, `"F"`, or
+  `"AMLI"`).
+* `\(amg, b)` : solve `Ax = b` for an `AMGSolver`, or apply one MG cycle for
+  an `AMGPreconditioner`.
+* `*(amg, x)` : multiply the original matrix `A` by vector `x` (available for
+  both `AMGSolver` and `AMGPreconditioner`).
+* `ldiv!(x, amg, b)` : in-place version of `\`; works for both solver types.
+* `mul!(b, amg, x)` : in-place matrix–vector product with the original `A`.
+* `diagnostics(A; kwargs...)` : run `solver_diagnostics` from the
+  [pyamg-examples](https://github.com/pyamg/pyamg-examples) repository to find
+  an optimal `SmoothedAggregationSolver` configuration; writes
+  `solver_diagnostic.txt` and `solver_diagnostic.py` to the current directory.
+* `py_csc(A)` : convert a Julia `SparseMatrixCSC` to a `scipy.sparse.csc_matrix`.
+* `py_csr(A)` : convert a Julia `SparseMatrixCSC` to a `scipy.sparse.csr_matrix`.
